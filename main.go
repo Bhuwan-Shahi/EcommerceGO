@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/gofiber/fiber/v2"
+	"ecommerceGO/config"
+	"ecommerceGO/internal/api"
+	"log"
 )
 
 func main() {
-	fmt.Println("Hello, From EcommerceGO")
-	app := fiber.New()
+	cfg, err := config.SetupEnv()
 
-	app.Listen("localhost:3000")
-	fmt.Println("Server is running on http://localhost:3000")
+	if err != nil {
+		log.Fatal("Error loading environment variables: ", err)
+	}
+	api.StartServer(cfg)
 }
