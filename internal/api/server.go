@@ -2,8 +2,8 @@ package api
 
 import (
 	"ecommerceGO/config"
-	"log"
-	"net/http"
+	"ecommerceGO/internal/api/rest"
+	"ecommerceGO/internal/api/rest/handlers"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -11,15 +11,17 @@ import (
 func StartServer(config config.Config) {
 	app := fiber.New()
 
-	app.Get("/health", HealthCheck)
+	rh := &rest.RestHandler{
+		App: app,
+	}
+	setupRoutes(rh)
 
-	app.Listen("localhost:8080")
+	app.Listen(config.Port)
 }
 
-func HealthCheck(c *fiber.Ctx) error {
-	log.Println("Health check endpoint hit")
-	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "Server is running",
-		"data":    nil,
-	})
+func setupRoutes(rh *rest.RestHandler) {
+	//users
+	handlers.SetupUserRoutes(rh)
+	//transcation
+	//catalog
 }
