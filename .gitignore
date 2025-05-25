@@ -2,3 +2,4 @@
 .node_modules
 .package.json
 .packgae-lock.json
+.gitignore
