@@ -3,6 +3,8 @@ node_modules/
 
 # Environment variables
 .env
+.gitignore
+.makefile
 
 # Logs
 logs/
