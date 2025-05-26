@@ -4,7 +4,6 @@ import (
 	"ecommerceGO/internal/api/rest"
 	"ecommerceGO/internal/dto"
 	"ecommerceGO/internal/service"
-	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -43,12 +42,12 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 }
 
 func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
+
 	user := dto.UserSignup{}
 	err := ctx.BodyParser(&user)
 	if err != nil {
-		log.Println("the error occure is :", err)
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
-			"mesage": "Provide valid input",
+			"message": "Provide valid input",
 		})
 	}
 
