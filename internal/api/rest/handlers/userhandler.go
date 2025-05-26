@@ -2,19 +2,26 @@ package handlers
 
 import (
 	"ecommerceGO/internal/api/rest"
+	"ecommerceGO/internal/dto"
+	"ecommerceGO/internal/service"
+	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type UserHnadler struct {
+	svc service.UserService
 }
 
 func SetupUserRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	//create an instance of user service and inject ot handler
-	handler := UserHnadler{}
+	svc := service.UserService{}
+	handler := UserHnadler{
+		svc: svc,
+	}
 
 	//pu8blic endpointss
 	app.Post("/register", handler.Register)
@@ -36,10 +43,26 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 }
 
 func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
+	user := dto.UserSignup{}
+	err := ctx.BodyParser(&user)
+	if err != nil {
+		log.Println("the error occure is :", err)
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
+			"mesage": "Provide valid input",
+		})
+	}
+
+	token, err := h.svc.SignUp(user)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
+			"mesage": "error on signup",
+		})
+	}
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Register",
+		"mesage": token,
 	})
 }
+
 func (h *UserHnadler) Login(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"mesage": "Register",
