@@ -3,6 +3,7 @@ package handlers
 import (
 	"ecommerceGO/internal/api/rest"
 	"ecommerceGO/internal/dto"
+	"ecommerceGO/internal/repository"
 	"ecommerceGO/internal/service"
 	"net/http"
 
@@ -17,7 +18,9 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	//create an instance of user service and inject ot handler
-	svc := service.UserService{}
+	svc := service.UserService{
+		Repo: repository.NewUserRepository(rh.DB),
+	}
 	handler := UserHnadler{
 		svc: svc,
 	}
@@ -63,9 +66,26 @@ func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHnadler) Login(ctx *fiber.Ctx) error {
+	loginInput := dto.UserLogin{}
+	err := ctx.BodyParser(&loginInput)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
+			"message": "Provide valid input",
+		})
+	}
+	token, err := h.svc.Login(loginInput.Email, loginInput.Password)
+
+	if err != nil{
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "Please provide valid username and password",
+		})
+	}
+	
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Register",
+		"message": "login",
+		"token":   token,
 	})
+
 }
 
 func (h *UserHnadler) GetVerificationCode(ctx *fiber.Ctx) error {
