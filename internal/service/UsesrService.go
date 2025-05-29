@@ -3,32 +3,47 @@ package service
 import (
 	"ecommerceGO/internal/domain"
 	"ecommerceGO/internal/dto"
+	"ecommerceGO/internal/helper"
 	"ecommerceGO/internal/repository"
 	"errors"
-	"fmt"
 	"log"
 )
 
 type UserService struct {
 	Repo repository.UserRepository
+	Auth helper.Auth
 }
 
-func (s UserService) SignUp(input dto.UserSignup) (string, error) { //any is alias for empty interface
+func (s UserService) SignUp(input dto.UserSignup) (string, error) {
+	// Hash the password
+	hPassword, err := s.Auth.CreateHashedPassword(input.Password)
+	if err != nil {
+		log.Println("Error hashing password:", err)
+		return "", err
+	}
 
-	user, _ := s.Repo.CreateUser(domain.User{
+	// Create the user
+	user, err := s.Repo.CreateUser(domain.User{
 		Email:    input.Email,
-		Password: input.Password,
+		Password: hPassword,
 		Phone:    input.Phone,
+		UserType: "buyer",
 	})
+	if err != nil {
+		log.Println("Error creating user:", err)
+		return "", err
+	}
 
-	//Generate token
-	log.Println(user)
-	userInfo := fmt.Sprint("%v,%v,%v", user.ID, user.Email, user.UserType)
+	log.Println("User created:", user)
 
-	//Perfomr DB operation and Business Logic
-	log.Println(input)
-	return userInfo, nil
+	// Generate a token for the user
+	token, err := s.Auth.GenerateToken(user.ID, user.Email, user.UserType)
+	if err != nil {
+		log.Println("Error generating token:", err)
+		return "", err
+	}
 
+	return token, nil
 }
 
 func (s UserService) findserByEmail(email string) (*domain.User, error) {
@@ -48,9 +63,14 @@ func (s UserService) Login(email, paswrod string) (string, error) { //any is ali
 	if err != nil {
 		return "", errors.New("user does not exits with provided email")
 	}
+	err = s.Auth.VerifyPassword(paswrod, user.Password)
 
-	//Compare password and generate token
-	return user.Email, nil
+	if err != nil {
+		return "", err
+	}
+
+	//generate token
+	return s.Auth.GenerateToken(user.ID, user.Email, user.UserType)
 
 }
 

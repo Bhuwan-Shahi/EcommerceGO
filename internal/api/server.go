@@ -5,6 +5,7 @@ import (
 	"ecommerceGO/internal/api/rest"
 	"ecommerceGO/internal/api/rest/handlers"
 	"ecommerceGO/internal/domain"
+	"ecommerceGO/internal/helper"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,8 +18,6 @@ func StartServer(config config.Config) {
 
 	db, err := gorm.Open(postgres.Open(config.Dsn), &gorm.Config{})
 
-
-
 	if err != nil {
 		log.Fatalf("Database Connection Error %v\n", err)
 	}
@@ -27,11 +26,11 @@ func StartServer(config config.Config) {
 	//Running data migration
 
 	db.AutoMigrate(&domain.User{})
-
+	auth := helper.SetupAuth(config.AppSecret)
 	rh := &rest.RestHandler{
-		App: app,
-		DB: db,
-
+		App:  app,
+		DB:   db,
+		Auth: auth,
 	}
 	setupRoutes(rh)
 

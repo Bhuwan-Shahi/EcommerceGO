@@ -20,6 +20,7 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	//create an instance of user service and inject ot handler
 	svc := service.UserService{
 		Repo: repository.NewUserRepository(rh.DB),
+		Auth: rh.Auth,
 	}
 	handler := UserHnadler{
 		svc: svc,
@@ -45,8 +46,9 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 }
 
 func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
-
 	user := dto.UserSignup{}
+
+	// Parse the request body
 	err := ctx.BodyParser(&user)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
@@ -54,14 +56,22 @@ func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// Call the SignUp method
 	token, err := h.svc.SignUp(user)
 	if err != nil {
+		if err.Error() == "user already exists" {
+        return ctx.Status(http.StatusConflict).JSON(&fiber.Map{
+            "message": "User with this email already exists",
+        })
+    }
+
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
-			"mesage": "error on signup",
+			"message": "error on signup",
 		})
 	}
+
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": token,
+		"message": token,
 	})
 }
 
@@ -75,12 +85,12 @@ func (h *UserHnadler) Login(ctx *fiber.Ctx) error {
 	}
 	token, err := h.svc.Login(loginInput.Email, loginInput.Password)
 
-	if err != nil{
+	if err != nil {
 		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
 			"message": "Please provide valid username and password",
 		})
 	}
-	
+
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "login",
 		"token":   token,

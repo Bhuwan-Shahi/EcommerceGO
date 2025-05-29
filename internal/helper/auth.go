@@ -4,6 +4,7 @@ import (
 	"ecommerceGO/internal/domain"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -14,6 +15,12 @@ import (
 
 type Auth struct {
 	Secret string
+}
+
+func SetupAuth(s string) Auth {
+	return Auth{
+		Secret: s,
+	}
 }
 
 func (a Auth) CreateHashedPassword(p string) (string, error) {
@@ -50,6 +57,7 @@ func (a Auth) GenerateToken(id uint, email string, role string) (string, error) 
 	tokenStr, err := token.SignedString([]byte(a.Secret))
 
 	if err != nil {
+		log.Println("Error signing token", err)
 		return "", errors.New("unable to sign a error")
 	}
 	return tokenStr, nil
@@ -110,12 +118,27 @@ func (a Auth) VerifyToken(t string) (domain.User, error) {
 
 	return domain.User{}, errors.New("token verification failed")
 }
-func (a Auth) Authorize(crx *fiber.Ctx) error {
-	return nil
+func (a Auth) Authorize(ctx *fiber.Ctx) error {
+
+	authHeader := ctx.GetReqHeaders()["Authorization"]
+
+	user, err := a.VerifyToken(authHeader[0])
+
+	if err != nil && user.ID > 0 {
+		ctx.Locals("user", user)
+		return ctx.Next()
+	} else {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": "Authorization fialed",
+			"reason":  err,
+		})
+	}
 
 }
 
 func (a Auth) GetCurrentUser(ctx *fiber.Ctx) domain.User {
-	return domain.User{}
+	user := ctx.Locals("user")
+
+	return user.(domain.User)
 
 }

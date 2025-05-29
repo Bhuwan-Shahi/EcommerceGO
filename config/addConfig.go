@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Port string
-	Dsn string //data seouce name
+	Port      string
+	Dsn       string //data seouce name
+	AppSecret string
 }
 
 func SetupEnv() (cfg Config, err error) {
@@ -20,14 +21,20 @@ func SetupEnv() (cfg Config, err error) {
 	httpPort := os.Getenv("Port")
 
 	if len(httpPort) < 1 {
-		return Config{}, errors.New("environment variable not found")
+		return Config{}, errors.New("environment variable port not found")
 	}
 
 	Dsn := os.Getenv("DSN")
 
 	if len(Dsn) < 1 {
-		return Config{}, errors.New("environment variable not found")
+		return Config{}, errors.New("environment variable dsn not found")
 	}
-	return Config{Port: httpPort, Dsn: Dsn}, nil
+
+	appSercet := os.Getenv("APP_SECRET")
+	if len(appSercet) < 1 {
+		return Config{}, errors.New("environment variable appsecret not found")
+	}
+
+	return Config{Port: httpPort, Dsn: Dsn, AppSecret: appSercet}, nil
 
 }
