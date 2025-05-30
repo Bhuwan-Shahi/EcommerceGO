@@ -5,6 +5,7 @@ import (
 	"ecommerceGO/internal/dto"
 	"ecommerceGO/internal/repository"
 	"ecommerceGO/internal/service"
+	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,23 +26,26 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	handler := UserHnadler{
 		svc: svc,
 	}
+	pubRoutes := app.Group("/users")
 
 	//pu8blic endpointss
-	app.Post("/register", handler.Register)
-	app.Post("/login", handler.Login)
+	pubRoutes.Post("/register", handler.Register)
+	pubRoutes.Post("/login", handler.Login)
+
+	pvtRoutes := pubRoutes.Group("/", rh.Auth.Authorize)
 
 	//private endpoints
-	app.Get("/verify", handler.GetVerificationCode)
-	app.Post("verify", handler.Verify)
-	app.Post("profile", handler.CreateProfile)
-	app.Get("/profile", handler.GetProfile)
+	pvtRoutes.Get("/verify", handler.GetVerificationCode)
+	pvtRoutes.Post("verify", handler.Verify)
+	pvtRoutes.Post("profile", handler.CreateProfile)
+	pvtRoutes.Get("/profile", handler.GetProfile)
 
-	app.Post("cart", handler.AddToCart)
-	app.Get("/cart", handler.GetCart)
-	app.Get("order", handler.GetOrders)
-	app.Get("order/:id", handler.GetOrder)
+	pvtRoutes.Post("cart", handler.AddToCart)
+	pvtRoutes.Get("/cart", handler.GetCart)
+	pvtRoutes.Get("order", handler.GetOrders)
+	pvtRoutes.Get("order/:id", handler.GetOrder)
 
-	app.Post("/become-seller", handler.Login)
+	pvtRoutes.Post("/become-seller", handler.Login)
 
 }
 
@@ -60,10 +64,10 @@ func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
 	token, err := h.svc.SignUp(user)
 	if err != nil {
 		if err.Error() == "user already exists" {
-        return ctx.Status(http.StatusConflict).JSON(&fiber.Map{
-            "message": "User with this email already exists",
-        })
-    }
+			return ctx.Status(http.StatusConflict).JSON(&fiber.Map{
+				"message": "User with this email already exists",
+			})
+		}
 
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 			"message": "error on signup",
@@ -71,7 +75,8 @@ func (h *UserHnadler) Register(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"message": token,
+		"message": "register",
+		"token":   token,
 	})
 }
 
@@ -100,58 +105,65 @@ func (h *UserHnadler) Login(ctx *fiber.Ctx) error {
 
 func (h *UserHnadler) GetVerificationCode(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Get verification code",
+		"message": "Get verification code",
 	})
 }
 
 func (h *UserHnadler) Verify(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Verify",
+		"message": "Verify",
 	})
 }
 
 func (h *UserHnadler) CreateProfile(ctx *fiber.Ctx) error {
+
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Crate profile",
+		"message": "Crate profile",
 	})
+
 }
 
 func (h *UserHnadler) GetProfile(ctx *fiber.Ctx) error {
+	user := h.svc.Auth.GetCurrentUser(ctx)
+
+	log.Println(user)
+
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Get profile",
+		"message": "Get profile",
+		"user":   user,
 	})
 }
 
 func (h *UserHnadler) AddToCart(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Add to cart",
+		"message": "Add to cart",
 	})
 }
 func (h *UserHnadler) GetCart(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Get cart",
+		"message": "Get cart",
 	})
 }
 
 func (h *UserHnadler) CrateOrder(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Create order",
+		"message": "Create order",
 	})
 }
 
 func (h *UserHnadler) GetOrders(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Get order",
+		"message": "Get order",
 	})
 }
 func (h *UserHnadler) GetOrder(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Get Order by id",
+		"message": "Get Order by id",
 	})
 }
 
 func (h *UserHnadler) BecomeSeller(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"mesage": "Become seller",
+		"message": "Become seller",
 	})
 }

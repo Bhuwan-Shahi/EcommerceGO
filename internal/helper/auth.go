@@ -119,22 +119,28 @@ func (a Auth) VerifyToken(t string) (domain.User, error) {
 	return domain.User{}, errors.New("token verification failed")
 }
 func (a Auth) Authorize(ctx *fiber.Ctx) error {
-
 	authHeader := ctx.GetReqHeaders()["Authorization"]
 
-	user, err := a.VerifyToken(authHeader[0])
-
-	if err != nil && user.ID > 0 {
-		ctx.Locals("user", user)
-		return ctx.Next()
-	} else {
+	// Check if the Authorization header is empty
+	if len(authHeader) == 0 {
 		return ctx.Status(401).JSON(fiber.Map{
-			"message": "Authorization fialed",
-			"reason":  err,
+			"message": "Authorization header is missing",
 		})
 	}
 
-}
+	// Verify the token
+	user, err := a.VerifyToken(authHeader[0])
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": "Authorization failed",
+			"reason":  err.Error(),
+		})
+	}
+
+	// If user is valid, store it in context and proceed
+	ctx.Locals("user", user)
+	return ctx.Next()
+} 
 
 func (a Auth) GetCurrentUser(ctx *fiber.Ctx) domain.User {
 	user := ctx.Locals("user")
