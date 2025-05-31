@@ -140,11 +140,15 @@ func (a Auth) Authorize(ctx *fiber.Ctx) error {
 	// If user is valid, store it in context and proceed
 	ctx.Locals("user", user)
 	return ctx.Next()
-} 
+}
 
 func (a Auth) GetCurrentUser(ctx *fiber.Ctx) domain.User {
 	user := ctx.Locals("user")
 
 	return user.(domain.User)
 
+}
+
+func (a Auth) GenerateCode() (int, error) {
+	return RandomNumber(6)
 }

@@ -7,6 +7,7 @@ import (
 	"ecommerceGO/internal/repository"
 	"errors"
 	"log"
+	"time"
 )
 
 type UserService struct {
@@ -74,10 +75,42 @@ func (s UserService) Login(email, paswrod string) (string, error) { //any is ali
 
 }
 
+func (s UserService) isVerifiedUser(id uint) bool {
+	curentUser, err := s.Repo.FindUserById(id)
+	return err == nil && curentUser.Verified
+}
+
 func (s UserService) GetVerificationCode(e domain.User) (int, error) { //any is alias for empty interface
 
-	//Perfomr DB operation and Business Logic
-	return 0, nil
+	//if usser already verified
+
+	if s.isVerifiedUser(e.ID) {
+		return 0, errors.New("user already verified")
+	}
+
+	//generate verification code
+
+	code, err := s.Auth.GenerateCode()
+
+	if err != nil {
+		return 0, nil
+	}
+
+	//update user with verificatio code
+	user := domain.User{
+		Expiry: time.Now().Add(30 * time.Minute),
+		Code:   code,
+	}
+
+	_, err = s.Repo.UpdateUser(e.ID, user)
+	if err != nil {
+		return 0, errors.New("unable to update verificaiton code")
+	}
+
+	//send SMS
+
+	//return verificaiton code
+	return code, nil
 
 }
 
