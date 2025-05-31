@@ -7,5 +7,9 @@ type UserLogin struct {
 
 type UserSignup struct {
 	UserLogin
-	Phone string `json:"phone"`
+	Phone string
+}
+
+type VerificationCodeInput struct {
+	Code int `json:"code"`
 }

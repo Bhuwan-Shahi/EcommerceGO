@@ -117,6 +117,33 @@ func (s UserService) GetVerificationCode(e domain.User) (int, error) { //any is 
 func (s UserService) VerifyCode(id uint, code int) error { //any is alias for empty interface
 
 	//Perfomr DB operation and Business Logic
+	if s.isVerifiedUser(id) {
+		log.Print("verified")
+		return errors.New("user already verified")
+	}
+
+	user, err := s.Repo.FindUserById(id)
+
+	if err != nil {
+		return err
+	}
+
+	if user.Code != code {
+		return errors.New("verification code doesnot match")
+	}
+	if !time.Now().Before(user.Expiry) {
+		return errors.New("verirication code expired")
+
+	}
+
+	updateUsesr := domain.User{
+		Verified: true,
+	}
+	_, err = s.Repo.UpdateUser(id, updateUsesr)
+	if err != nil {
+		return errors.New("unable to verify user")
+	}
+
 	return nil
 
 }
