@@ -1,18 +1,22 @@
 package service
 
 import (
+	"ecommerceGO/config"
 	"ecommerceGO/internal/domain"
 	"ecommerceGO/internal/dto"
 	"ecommerceGO/internal/helper"
 	"ecommerceGO/internal/repository"
+	"ecommerceGO/pkg/notificatioin"
 	"errors"
 	"log"
+	"strconv"
 	"time"
 )
 
 type UserService struct {
-	Repo repository.UserRepository
-	Auth helper.Auth
+	Repo   repository.UserRepository
+	Auth   helper.Auth
+	Config config.Config
 }
 
 func (s UserService) SignUp(input dto.UserSignup) (string, error) {
@@ -80,12 +84,12 @@ func (s UserService) isVerifiedUser(id uint) bool {
 	return err == nil && curentUser.Verified
 }
 
-func (s UserService) GetVerificationCode(e domain.User) (int, error) { //any is alias for empty interface
+func (s UserService) GetVerificationCode(e domain.User) error { //any is alias for empty interface
 
 	//if usser already verified
 
 	if s.isVerifiedUser(e.ID) {
-		return 0, errors.New("user already verified")
+		return errors.New("user already verified")
 	}
 
 	//generate verification code
@@ -93,7 +97,7 @@ func (s UserService) GetVerificationCode(e domain.User) (int, error) { //any is 
 	code, err := s.Auth.GenerateCode()
 
 	if err != nil {
-		return 0, nil
+		return nil
 	}
 
 	//update user with verificatio code
@@ -104,13 +108,16 @@ func (s UserService) GetVerificationCode(e domain.User) (int, error) { //any is 
 
 	_, err = s.Repo.UpdateUser(e.ID, user)
 	if err != nil {
-		return 0, errors.New("unable to update verificaiton code")
+		return errors.New("unable to update verificaiton code")
 	}
 
-	//send SMS
+	user, _ = s.Repo.FindUserById(user.ID)
 
+	//send SMS
+	notificatioinCient := notificatioin.NewNotificationCleint(s.Config)
+	notificatioinCient.SendSMS(user.Phone, strconv.Itoa(code))
 	//return verificaiton code
-	return code, nil
+	return nil
 
 }
 
