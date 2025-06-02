@@ -6,10 +6,10 @@ import (
 	"ecommerceGO/internal/dto"
 	"ecommerceGO/internal/helper"
 	"ecommerceGO/internal/repository"
-	"ecommerceGO/pkg/notificatioin"
+	"ecommerceGO/pkg/notification"
 	"errors"
+	"fmt"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -111,12 +111,18 @@ func (s UserService) GetVerificationCode(e domain.User) error { //any is alias f
 		return errors.New("unable to update verificaiton code")
 	}
 
-	user, _ = s.Repo.FindUserById(user.ID)
+	user, _ = s.Repo.FindUserById(e.ID)
 
 	//send SMS
-	notificatioinCient := notificatioin.NewNotificationCleint(s.Config)
-	notificatioinCient.SendSMS(user.Phone, strconv.Itoa(code))
-	//return verificaiton code
+	notificatioinCient := notification.NewNotificationCleint(s.Config)
+
+	msg := fmt.Sprintf("Your verificatio code is &%v", code)
+
+	err = notificatioinCient.SendSMS(user.Phone, msg)
+	if err != nil {
+		return errors.New("error in sending verificaiton code")
+	}
+
 	return nil
 
 }

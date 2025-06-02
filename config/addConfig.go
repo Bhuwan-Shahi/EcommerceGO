@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	Port      string
-	Dsn       string //data seouce name
-	AppSecret string
+	Port             string
+	Dsn              string //data seouce name
+	AppSecret        string
+	TwilioAccountSid string
+	TwilioAuthToken  string
+	TwilioFromPhone  string
 }
 
 func SetupEnv() (cfg Config, err error) {
@@ -35,6 +38,10 @@ func SetupEnv() (cfg Config, err error) {
 		return Config{}, errors.New("environment variable appsecret not found")
 	}
 
-	return Config{Port: httpPort, Dsn: Dsn, AppSecret: appSercet}, nil
+	return Config{Port: httpPort, Dsn: Dsn, AppSecret: appSercet,
+		TwilioAccountSid: os.Getenv("TWILIO_ACCOUNT_SID"),
+		TwilioAuthToken:  os.Getenv("TWILIO_AUTH_TOKEN"),
+		TwilioFromPhone:  os.Getenv("TWILIO_FROM_PHONE"),
+	}, nil
 
 }

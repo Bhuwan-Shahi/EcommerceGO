@@ -110,7 +110,7 @@ func (h *UserHnadler) GetVerificationCode(ctx *fiber.Ctx) error {
 
 	//create verification code and update to user profile in DB
 
-	code, err := h.svc.GetVerificationCode(user)
+	err := h.svc.GetVerificationCode(user)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
@@ -120,7 +120,6 @@ func (h *UserHnadler) GetVerificationCode(ctx *fiber.Ctx) error {
 
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "Get verification code",
-		"data":    code,
 	})
 }
 
