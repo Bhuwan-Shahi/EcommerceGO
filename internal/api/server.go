@@ -25,7 +25,12 @@ func StartServer(config config.Config) {
 
 	//Running data migration
 
-	db.AutoMigrate(&domain.User{})
+	err = db.AutoMigrate(&domain.User{}, domain.BankAccount{})
+
+	if err != nil {
+		log.Fatalf("error on migraiton %v", err)
+	}
+	log.Println("migration success!!")
 	auth := helper.SetupAuth(config.AppSecret)
 	rh := &rest.RestHandler{
 		App:    app,

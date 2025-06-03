@@ -181,10 +181,47 @@ func (s UserService) UpdateProfile(id uint, input any) error { //any is alias fo
 	return nil
 
 }
-func (s UserService) BecomeSeller(id uint, input any) (string, error) { //any is alias for empty interface
+func (s UserService) BecomeSeller(id uint, input dto.SellerInput) (string, error) { //any is alias for empty interface
 
-	//Perfomr DB operation and Business Logic
-	return "", nil
+	//find the existing user
+
+	user, _ := s.Repo.FindUserById(id)
+
+	if user.UserType == domain.SELLER {
+		return "", errors.New("You are already a buyer!")
+	}
+
+	//update user
+
+	seller, err := s.Repo.UpdateUser(id, domain.User{
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Phone:     input.PhoneNumber,
+		UserType:  domain.SELLER,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	//generate token
+	token, err := s.Auth.GenerateToken(user.ID, user.Email, seller.UserType)
+
+	if err != nil {
+		return "", err
+	}
+
+	//create esewa id
+	//cerate bank account info
+	account := domain.BankAccount{
+		BankAccount: input.BankAccountNumber,
+		SwiftCode:   input.SwiftCode,
+		PaymentType: input.PaymentType,
+		UserId:      id,
+	}
+
+	err = s.Repo.CreateBankAccount(account)
+
+	return token, err
 
 }
 

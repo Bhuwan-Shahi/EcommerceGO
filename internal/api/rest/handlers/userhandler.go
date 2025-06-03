@@ -46,7 +46,7 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	pvtRoutes.Get("order", handler.GetOrders)
 	pvtRoutes.Get("order/:id", handler.GetOrder)
 
-	pvtRoutes.Post("/become-seller", handler.Login)
+	pvtRoutes.Post("/become-seller", handler.BecomeSeller)
 
 }
 
@@ -196,7 +196,31 @@ func (h *UserHnadler) GetOrder(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHnadler) BecomeSeller(ctx *fiber.Ctx) error {
+
+	user := h.svc.Auth.GetCurrentUser(ctx)
+
+	//
+	req := dto.SellerInput{}
+
+	err := ctx.BodyParser(&req)
+
+	if err != nil {
+		return ctx.Status(400).JSON(&fiber.Map{
+			"message": "request parameters are not valid",
+		})
+	}
+
+	token, err := h.svc.BecomeSeller(user.ID, req)
+
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "Failed to become seller",
+		})
+	}
+
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"message": "Become seller",
+		"message": "become seller",
+		"token":   token,
 	})
+
 }
